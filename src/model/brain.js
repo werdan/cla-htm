@@ -3,10 +3,14 @@ var ScalarEncoder = require('../encoders/scalar.js');
 var Column = require('./column.js');
 var bignum = require('bignum');
 
-var Brain = function(perceptionFieldBitSize) {
+var Brain = function(bc) {
 
 	this.columns = [];
-	this.inputEncoder = new ScalarEncoder(bignum(1),bignum(1000),bignum(10));
+	this.inputEncoder = new ScalarEncoder(bignum(bc['minValue']),
+										  bignum(bc['maxValue']),
+										  bignum(bc['radius']));
+
+	perceptionFieldBitSize = this.inputEncoder.getPerceptionFieldSize();
 
 	for (var i = 0; i <= config.columnCount; i++) {
 			column = new Column(i,perceptionFieldBitSize);
@@ -18,7 +22,8 @@ Brain.prototype.process = function(bigIntInput){
 	
 	encodedInput = this.inputEncoder.encode(bigIntInput);
 	overlapMap = this.calculateOverlap(encodedInput);
-	this.inhibit(overlapMap, this.columns);	
+	this.inhibit(overlapMap);	
+	this.learn(encodedInput);
 }
 
 
@@ -61,7 +66,7 @@ Brain.prototype.neighbors = function(centralColumn, columns) {
 	var leftBorderId = centralColumn.id - config.inbitionRadius;
 	var rightBorderId = centralColumn.id + config.inbitionRadius;
 
-	columns.forEach(function(column){
+	this.columns.forEach(function(column){
 		if (column.id >= leftBorderId && 
 			column.id <= rightBorderId) {
 			
@@ -69,26 +74,33 @@ Brain.prototype.neighbors = function(centralColumn, columns) {
 		}  		
 	});
 
+	centralColumn.neighbors = arrayNeighborColumns;
 
 	return arrayNeighborColumns;
 
 }
 
-Brain.prototype.inhibit = function(overlapMap, columns) {
+Brain.prototype.inhibit = function(overlapMap) {
 	
 	var thisbrain = this;
 
 	this.columns.forEach(function(column){
 
-		minLocalActivity = thisbrain.kthScore(thisbrain.neighbors(column, columns), config.desiredLocalActivity, overlapMap);
+		minLocalActivity = thisbrain.kthScore(thisbrain.neighbors(column), config.desiredLocalActivity, overlapMap);
 
 		if (overlapMap[column.id] > 0 && overlapMap[column.id] > minLocalActivity) {
-			column.active = true;
-		} 
+			column.setActive(true);
+		} else {
+			column.setActive(false);
+		}
 
 	});
 }
 
-
+Brain.prototype.learn = function(bigIntInput) {
+	this.columns.forEach(function(column){
+		column.learn(bigIntInput);
+	});
+}
 
 module.exports = Brain;

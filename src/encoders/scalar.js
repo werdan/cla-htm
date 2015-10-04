@@ -11,26 +11,25 @@ var ScalarEncoder = function(minValue,maxValue,radius) {
 		throw "Expecting radius to be within minValue...maxValue range";
 	}
 
-	console.log('Creating scalar encoder...');
-
 	this.radius = radius;
 	this.minValue = minValue;
 
 
-	bucketCount 	 =	Math.ceil(maxValue.sub(minValue).div(radius));
+	this.bucketCount 	 =	Math.ceil(maxValue.sub(minValue).div(radius));
 	// bitsNumber = width + bucketCount - 1;
 	
 	// As found in Numenta video
 	this.bitWidth = 21;
 
-	console.log("Scalar contains " + bucketCount + " buckets");
-
 }
 
+ScalarEncoder.prototype.getPerceptionFieldSize = function(){
+	return this.bucketCount;
+}
 
 ScalarEncoder.prototype.encode = function(bigIntInput){
 
-	counter = Math.ceil(bigIntInput.sub(this.minValue).div(this.radius).sub(1));
+	counter = Math.ceil(bigIntInput.sub(this.minValue).div(this.radius));
 
 	return bignum(2).pow(this.bitWidth).sub(1).shiftLeft(counter);
 

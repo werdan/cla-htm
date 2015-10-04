@@ -14,3 +14,9 @@ config.columnCount = 1000;
 
 config.desiredLocalActivity = 3;
 config.inbitionRadius = 25;
+
+config.permanenceInc  = 0.1;
+
+config.dutyCycleMemoryLength = 100;
+
+config.minColumnActivity = 0.01;
